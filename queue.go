@@ -338,15 +338,29 @@ func (queue *redisQueue) consumeBatch(batchSize int) bool {
 		return false
 	}
 
-	for i := 0; i < batchSize; i++ {
-		result := queue.redisClient.RPopLPush(queue.readyKey, queue.unackedKey)
-		if redisErrIsNil(result) {
-			// debug(fmt.Sprintf("rmq queue consumed last batch %s %d", queue, i)) // COMMENTOUT
+	reqs, err := queue.redisClient.Pipelined(func(pipe *redis.Pipeline) error {
+		for i := 0; i < batchSize; i++ {
+			pipe.RPopLPush(queue.readyKey, queue.unackedKey)
+		}
+		return nil
+	})
+
+	if err != nil && err != redis.Nil {
+		// TODO: Not sure what to do here just yet
+		debug("Unexpected error occurred")
+	}
+
+	for _, result := range reqs {
+		switch result := result.(type) {
+		case *redis.StringCmd:
+			if result.Err() != nil && result.Err() != redis.Nil || result.Val() == "" {
+				continue
+			}
+			queue.deliveryChan <- newDelivery(result.Val(), queue.unackedKey, queue.rejectedKey, queue.pushKey, queue.redisClient)
+		default:
 			return false
 		}
-
 		// debug(fmt.Sprintf("consume %d/%d %s %s", i, batchSize, result.Val(), queue)) // COMMENTOUT
-		queue.deliveryChan <- newDelivery(result.Val(), queue.unackedKey, queue.rejectedKey, queue.pushKey, queue.redisClient)
 	}
 
 	// debug(fmt.Sprintf("rmq queue consumed batch %s %d", queue, batchSize)) // COMMENTOUT
@@ -425,5 +439,5 @@ func redisErrIsNil(result redis.Cmder) bool {
 }
 
 func debug(message string) {
-	// log.Printf("rmq debug: %s", message) // COMMENTOUT
+	log.Printf("rmq debug: %s", message) // COMMENTOUT
 }
