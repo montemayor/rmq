@@ -253,7 +253,7 @@ func (queue *redisQueue) StopConsuming() bool {
 func (queue *redisQueue) AddConsumer(tag string, consumer Consumer) (name string, stopper chan<- int) {
 	name = queue.addConsumer(tag)
 	stopChan := make(chan int, 1)
-	go queue.consumerConsume(consumer, stopChan)
+	go queue.consumerConsume(consumer, name, stopChan)
 	return name, stopChan
 }
 
@@ -369,7 +369,8 @@ func (queue *redisQueue) consumeBatch(batchSize int) bool {
 	return true
 }
 
-func (queue *redisQueue) consumerConsume(consumer Consumer, stopper chan int) {
+func (queue *redisQueue) consumerConsume(consumer Consumer, name string, stopper chan int) {
+	defer queue.RemoveConsumer(name)
 	for {
 		select {
 		case delivery := <-queue.deliveryChan:
