@@ -6,8 +6,9 @@ import (
 	"strings"
 	"time"
 
+	"gopkg.in/redis.v4"
+
 	"github.com/adjust/uniuri"
-	"gopkg.in/redis.v3"
 )
 
 const heartbeatDuration = time.Minute
@@ -25,12 +26,12 @@ type redisConnection struct {
 	Name             string
 	heartbeatKey     string // key to keep alive
 	queuesKey        string // key to list of queues consumed by this connection
-	redisClient      *redis.Client
+	redisClient      *redis.ClusterClient
 	heartbeatStopped bool
 }
 
 // OpenConnectionWithRedisClient opens and returns a new connection
-func OpenConnectionWithRedisClient(tag string, redisClient *redis.Client) *redisConnection {
+func OpenConnectionWithRedisClient(tag string, redisClient *redis.ClusterClient) *redisConnection {
 	name := fmt.Sprintf("%s-%s", tag, uniuri.NewLen(6))
 
 	connection := &redisConnection{
@@ -54,10 +55,9 @@ func OpenConnectionWithRedisClient(tag string, redisClient *redis.Client) *redis
 
 // OpenConnection opens and returns a new connection
 func OpenConnection(tag, network, address string, db int) *redisConnection {
-	redisClient := redis.NewClient(&redis.Options{
-		Network: network,
-		Addr:    address,
-		DB:      int64(db),
+	addresses := []string{address}
+	redisClient := redis.NewClusterClient(&redis.ClusterOptions{
+		Addrs: addresses,
 	})
 	return OpenConnectionWithRedisClient(tag, redisClient)
 }

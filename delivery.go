@@ -3,7 +3,7 @@ package rmq
 import (
 	"fmt"
 
-	"gopkg.in/redis.v3"
+	"gopkg.in/redis.v4"
 )
 
 type Delivery interface {
@@ -18,10 +18,10 @@ type wrapDelivery struct {
 	unackedKey  string
 	rejectedKey string
 	pushKey     string
-	redisClient *redis.Client
+	redisClient *redis.ClusterClient
 }
 
-func newDelivery(payload, unackedKey, rejectedKey, pushKey string, redisClient *redis.Client) *wrapDelivery {
+func newDelivery(payload, unackedKey, rejectedKey, pushKey string, redisClient *redis.ClusterClient) *wrapDelivery {
 	return &wrapDelivery{
 		payload:     payload,
 		unackedKey:  unackedKey,
