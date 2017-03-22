@@ -6,7 +6,7 @@ import (
 	"strings"
 	"time"
 
-	"gopkg.in/redis.v4"
+	"gopkg.in/redis.v5"
 
 	"github.com/adjust/uniuri"
 )
@@ -26,12 +26,12 @@ type redisConnection struct {
 	Name             string
 	heartbeatKey     string // key to keep alive
 	queuesKey        string // key to list of queues consumed by this connection
-	redisClient      *redis.ClusterClient
+	redisClient      redis.Cmdable
 	heartbeatStopped bool
 }
 
-// OpenConnectionWithRedisClient opens and returns a new connection
-func OpenConnectionWithRedisClient(tag string, redisClient *redis.ClusterClient) *redisConnection {
+// OpenConnectionWithRedisCmdable opens and returns a new connection
+func OpenConnectionWithRedisCmdable(tag string, redisClient redis.Cmdable) *redisConnection {
 	name := fmt.Sprintf("%s-%s", tag, uniuri.NewLen(6))
 
 	connection := &redisConnection{
@@ -55,11 +55,11 @@ func OpenConnectionWithRedisClient(tag string, redisClient *redis.ClusterClient)
 
 // OpenConnection opens and returns a new connection
 func OpenConnection(tag, network, address string, db int) *redisConnection {
-	addresses := []string{address}
-	redisClient := redis.NewClusterClient(&redis.ClusterOptions{
-		Addrs: addresses,
+	redisClient := redis.NewClient(&redis.Options{
+		Addr: address,
+		DB:   db,
 	})
-	return OpenConnectionWithRedisClient(tag, redisClient)
+	return OpenConnectionWithRedisCmdable(tag, redisClient)
 }
 
 // OpenQueue opens and returns the queue with a given name

@@ -7,7 +7,7 @@ import (
 	"time"
 
 	"github.com/adjust/uniuri"
-	"gopkg.in/redis.v4"
+	"gopkg.in/redis.v5"
 )
 
 const (
@@ -53,14 +53,14 @@ type redisQueue struct {
 	rejectedKey      string // key to list of rejected deliveries
 	unackedKey       string // key to list of currently consuming deliveries
 	pushKey          string // key to list of pushed deliveries
-	redisClient      *redis.ClusterClient
+	redisClient      redis.Cmdable
 	deliveryChan     chan Delivery // nil for publish channels, not nil for consuming channels
 	prefetchLimit    int           // max number of prefetched deliveries number of unacked can go up to prefetchLimit + numConsumers
 	pollDuration     time.Duration
 	consumingStopped bool
 }
 
-func newQueue(name, connectionName, queuesKey string, redisClient *redis.ClusterClient) *redisQueue {
+func newQueue(name, connectionName, queuesKey string, redisClient redis.Cmdable) *redisQueue {
 	consumersKey := strings.Replace(connectionQueueConsumersTemplate, phConnection, connectionName, 1)
 	consumersKey = strings.Replace(consumersKey, phQueue, name, 1)
 
