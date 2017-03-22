@@ -1,7 +1,6 @@
 package rmq
 
 import (
-	"bytes"
 	"fmt"
 	"sort"
 )
@@ -77,7 +76,7 @@ func NewStats() Stats {
 	}
 }
 
-func CollectStats(queueList []string, mainConnection *RedisConnection) Stats {
+func collectStats(queueList []string, mainConnection *RedisConnection) Stats {
 	stats := NewStats()
 	for _, queueName := range queueList {
 		queue := mainConnection.openQueue(queueName)
@@ -111,100 +110,6 @@ func CollectStats(queueList []string, mainConnection *RedisConnection) Stats {
 	}
 
 	return stats
-}
-
-func (stats Stats) String() string {
-	var buffer bytes.Buffer
-
-	for queueName, queueStat := range stats.QueueStats {
-		buffer.WriteString(fmt.Sprintf("    queue:%s ready:%d rejected:%d unacked:%d Consumers:%d\n",
-			queueName, queueStat.ReadyCount, queueStat.RejectedCount, queueStat.UnackedCount(), queueStat.ConsumerCount(),
-		))
-
-		for connectionName, connectionStat := range queueStat.ConnectionStats {
-			buffer.WriteString(fmt.Sprintf("        connection:%s unacked:%d Consumers:%d Active:%t\n",
-				connectionName, connectionStat.UnackedCount, len(connectionStat.Consumers), connectionStat.Active,
-			))
-		}
-	}
-
-	for connectionName, Active := range stats.otherConnections {
-		buffer.WriteString(fmt.Sprintf("    connection:%s Active:%t\n",
-			connectionName, Active,
-		))
-	}
-
-	return buffer.String()
-}
-
-func (stats Stats) GetHtml(layout, refresh string) string {
-	buffer := bytes.NewBufferString("<html>")
-
-	if refresh != "" {
-		buffer.WriteString(fmt.Sprintf(`<head><meta http-equiv="refresh" content="%s">`, refresh))
-	}
-
-	buffer.WriteString(`<body><table style="font-family:monospace">`)
-	buffer.WriteString(`<tr><td>` +
-		`queue</td><td></td><td>` +
-		`ready</td><td></td><td>` +
-		`rejected</td><td></td><td>` +
-		`</td><td></td><td>` +
-		`connections</td><td></td><td>` +
-		`unacked</td><td></td><td>` +
-		`Consumers</td><td></td></tr>`,
-	)
-
-	for _, queueName := range stats.sortedQueueNames() {
-		queueStat := stats.QueueStats[queueName]
-		connectionNames := queueStat.ConnectionStats.sortedNames()
-		buffer.WriteString(fmt.Sprintf(`<tr><td>`+
-			`%s</td><td></td><td>`+
-			`%d</td><td></td><td>`+
-			`%d</td><td></td><td>`+
-			`%s</td><td></td><td>`+
-			`%d</td><td></td><td>`+
-			`%d</td><td></td><td>`+
-			`%d</td><td></td></tr>`,
-			queueName, queueStat.ReadyCount, queueStat.RejectedCount, "", len(connectionNames), queueStat.UnackedCount(), queueStat.ConsumerCount(),
-		))
-
-		if layout != "condensed" {
-			for _, connectionName := range connectionNames {
-				connectionStat := queueStat.ConnectionStats[connectionName]
-				buffer.WriteString(fmt.Sprintf(`<tr style="color:lightgrey"><td>`+
-					`%s</td><td></td><td>`+
-					`%s</td><td></td><td>`+
-					`%s</td><td></td><td>`+
-					`%s</td><td></td><td>`+
-					`%s</td><td></td><td>`+
-					`%d</td><td></td><td>`+
-					`%d</td><td></td></tr>`,
-					"", "", "", ActiveSign(connectionStat.Active), connectionName, connectionStat.UnackedCount, len(connectionStat.Consumers),
-				))
-			}
-		}
-	}
-
-	if layout != "condensed" {
-		buffer.WriteString(`<tr><td>-----</td></tr>`)
-		for _, connectionName := range stats.sortedConnectionNames() {
-			Active := stats.otherConnections[connectionName]
-			buffer.WriteString(fmt.Sprintf(`<tr style="color:lightgrey"><td>`+
-				`%s</td><td></td><td>`+
-				`%s</td><td></td><td>`+
-				`%s</td><td></td><td>`+
-				`%s</td><td></td><td>`+
-				`%s</td><td></td><td>`+
-				`%s</td><td></td><td>`+
-				`%s</td><td></td></tr>`,
-				"", "", "", ActiveSign(Active), connectionName, "", "",
-			))
-		}
-	}
-
-	buffer.WriteString(`</table></body></html>`)
-	return buffer.String()
 }
 
 func (stats ConnectionStats) sortedNames() []string {

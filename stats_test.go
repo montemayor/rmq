@@ -36,27 +36,10 @@ func (suite *StatsSuite) TestStats(c *C) {
 	consumer.LastDeliveries[1].Reject()
 	q2.AddConsumer("stats-cons2", NewTestConsumer("hand-B"))
 
-	stats := CollectStats(connection.GetOpenQueues(), connection)
-	// log.Printf("stats\n%s", stats)
-	html := stats.GetHtml("", "")
-	c.Check(html, Matches, ".*queue.*ready.*connection.*unacked.*consumers.*q1.*1.*0.*0.*")
-	c.Check(html, Matches, ".*queue.*ready.*connection.*unacked.*consumers.*q2.*0.*1.*1.*2.*conn2.*1.*2.*")
-
-	stats = CollectStats([]string{"stats-q1", "stats-q2"}, connection)
-
-	for key, _ := range stats.QueueStats {
+	stats := connection.CollectStats([]string{"stats-q1", "stats-q2"})
+	for key := range stats.QueueStats {
 		c.Check(key, Matches, "stats.*")
 	}
-	/*
-		<html><body><table style="font-family:monospace">
-		<tr><td>queue</td><td></td><td>ready</td><td></td><td>rejected</td><td></td><td style="color:lightgrey">connection</td><td></td><td>unacked</td><td></td><td>consumers</td><td></td></tr>
-		<tr><td>stats-q2</td><td></td><td>0</td><td></td><td>1</td><td></td><td></td><td></td><td>1</td><td></td><td>2</td><td></td></tr>
-		<tr style="color:lightgrey"><td></td><td></td><td></td><td></td><td></td><td></td><td>stats-conn2-vY5ZPz</td><td></td><td>1</td><td></td><td>2</td><td></td></tr>
-		<tr><td>stats-q1</td><td></td><td>1</td><td></td><td>0</td><td></td><td></td><td></td><td>0</td><td></td><td>0</td><td></td></tr>
-		<tr><td>q2</td><td></td><td>0</td><td></td><td>0</td><td></td><td></td><td></td><td>0</td><td></td><td>0</td><td></td></tr>
-		<tr><td>q1</td><td></td><td>0</td><td></td><td>0</td><td></td><td></td><td></td><td>0</td><td></td><td>0</td><td></td></tr>
-		</table></body></html>
-	*/
 
 	q2.StopConsuming()
 	connection.StopHeartbeat()

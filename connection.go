@@ -70,7 +70,7 @@ func (connection *RedisConnection) OpenQueue(name string) Queue {
 }
 
 func (connection *RedisConnection) CollectStats(queueList []string) Stats {
-	return CollectStats(queueList, connection)
+	return collectStats(queueList, connection)
 }
 
 func (connection *RedisConnection) String() string {
