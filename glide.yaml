@@ -1,0 +1,8 @@
+package: github.com/ryanleary/rmq
+import:
+- package: github.com/adjust/rmq
+- package: github.com/adjust/uniuri
+- package: gopkg.in/redis.v5
+  version: ^5.2.9
+testImport:
+- package: github.com/adjust/gocheck
