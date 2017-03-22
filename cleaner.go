@@ -3,10 +3,10 @@ package rmq
 import "fmt"
 
 type Cleaner struct {
-	connection *redisConnection
+	connection *RedisConnection
 }
 
-func NewCleaner(connection *redisConnection) *Cleaner {
+func NewCleaner(connection *RedisConnection) *Cleaner {
 	return &Cleaner{connection: connection}
 }
 
@@ -26,7 +26,7 @@ func (cleaner *Cleaner) Clean() error {
 	return nil
 }
 
-func (cleaner *Cleaner) CleanConnection(connection *redisConnection) error {
+func (cleaner *Cleaner) CleanConnection(connection *RedisConnection) error {
 	queueNames := connection.GetConsumingQueues()
 	for _, queueName := range queueNames {
 		queue, ok := connection.OpenQueue(queueName).(*redisQueue)

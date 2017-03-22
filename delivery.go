@@ -8,20 +8,21 @@ import (
 
 type Delivery interface {
 	Payload() string
+	PayloadBytes() []byte
 	Ack() bool
 	Reject() bool
 	Push() bool
 }
 
 type wrapDelivery struct {
-	payload     string
+	payload     []byte
 	unackedKey  string
 	rejectedKey string
 	pushKey     string
 	redisClient redis.Cmdable
 }
 
-func newDelivery(payload, unackedKey, rejectedKey, pushKey string, redisClient redis.Cmdable) *wrapDelivery {
+func newDelivery(payload []byte, unackedKey, rejectedKey, pushKey string, redisClient redis.Cmdable) *wrapDelivery {
 	return &wrapDelivery{
 		payload:     payload,
 		unackedKey:  unackedKey,
@@ -36,6 +37,10 @@ func (delivery *wrapDelivery) String() string {
 }
 
 func (delivery *wrapDelivery) Payload() string {
+	return string(delivery.payload)
+}
+
+func (delivery *wrapDelivery) PayloadBytes() []byte {
 	return delivery.payload
 }
 

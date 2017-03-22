@@ -355,10 +355,11 @@ func (queue *redisQueue) consumeBatch(batchSize int) bool {
 	for _, result := range reqs {
 		switch result := result.(type) {
 		case *redis.StringCmd:
-			if result.Err() != nil && result.Err() != redis.Nil || result.Val() == "" {
+			data, cmdErr := result.Bytes()
+			if cmdErr != nil && cmdErr != redis.Nil || len(data) == 0 {
 				continue
 			}
-			queue.deliveryChan <- newDelivery(result.Val(), queue.unackedKey, queue.rejectedKey, queue.pushKey, queue.redisClient)
+			queue.deliveryChan <- newDelivery(data, queue.unackedKey, queue.rejectedKey, queue.pushKey, queue.redisClient)
 		default:
 			return false
 		}

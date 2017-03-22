@@ -30,6 +30,10 @@ func (delivery *TestDelivery) Payload() string {
 	return delivery.payload
 }
 
+func (delivery *TestDelivery) PayloadBytes() []byte {
+	return []byte(delivery.payload)
+}
+
 func (delivery *TestDelivery) Ack() bool {
 	if delivery.State == Unacked {
 		delivery.State = Acked
