@@ -28,6 +28,8 @@ const (
 	defaultBatchTimeout = time.Second
 )
 
+// Queue interface defines the primary methods for interacting with data inserting
+// and pulling from a Queue.
 type Queue interface {
 	Publish(payload string) bool
 	PublishBytes(payload []byte) bool

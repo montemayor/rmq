@@ -69,10 +69,13 @@ func (connection *RedisConnection) OpenQueue(name string) Queue {
 	return queue
 }
 
+// CollectStats returns a populated Stats object for all RMQ queues visible to
+// the connection.
 func (connection *RedisConnection) CollectStats(queueList []string) Stats {
 	return collectStats(queueList, connection)
 }
 
+// String returns the connection name
 func (connection *RedisConnection) String() string {
 	return connection.Name
 }
@@ -103,6 +106,8 @@ func (connection *RedisConnection) StopHeartbeat() bool {
 	return !redisErrIsNil(connection.redisClient.Del(connection.heartbeatKey))
 }
 
+// Close safely shuts down the client and removes the active connection from the
+// set of active RMQ connections
 func (connection *RedisConnection) Close() bool {
 	return !redisErrIsNil(connection.redisClient.SRem(connectionsKey, connection.Name))
 }
